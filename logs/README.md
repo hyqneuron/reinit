@@ -626,9 +626,19 @@ model_conf = same as model12
 
 ## model22
 
-Somehow all previous weight initialization were done with `n=k*k*num_in_channel`. I still have no idea why it went that
-way. model22 is SGD, weight_decay=0.0005, similar to model19, but with weight initialization fixed to
-`n=k*k*num_out_channel`
+Very similar to model19, with Dropout2d swapped out for vanilla Dropout. Surprisingly this improves test accuracy by
+almost 2%.
+
+```python
+optimizer     = SGD
+lr            = 0.001, [30]*10
+weight_decay  = 0.0005
+test_accuracy = 0.932
+model_conf = same as model12
+```
+## model23
+
+Very similar to model18, with Dropout2d swapped out for vanilla Dropout.
 
 ```python
 optimizer     = SGD
