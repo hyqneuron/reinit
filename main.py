@@ -10,6 +10,7 @@ import torchvision
 from collections import OrderedDict
 from pprint import pprint
 import gc
+import argparse
 from pympler.tracker import SummaryTracker
 from multi_gpu import wrap_model
 
@@ -19,6 +20,14 @@ TODOs:
 2. figure out (increase eps, separate weight decay) actually improve things
 3. (remove 0-unit, remove low-quantile unit)
 """
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--gpus', type=lambda xs:map(int, xs.split(',')), default=[0])
+parser.add_argument('--thread-train', type=int, default=4)
+parser.add_argument('--thread-test',  type=int, default=2)
+args = parser.parse_args()
+
+pprint(args)
 
 model_conf_11 = [
     ('conv1_1', (64,  None)),
@@ -100,7 +109,7 @@ def make_model(num_class=10):
     model = nn.Sequential(layers)
     model.model_conf = model_conf # capture the model_conf for serialization
     init_weights(model, use_in_channel=True)
-    model = wrap_model(model)
+    model = wrap_model(model, args)
     return model
 
 def make_data(train):
@@ -118,9 +127,9 @@ def make_all(batch_size=64, algo='SGD'):
     dataset      = make_data(train=True)
     dataset_test = make_data(train=False)
     loader       = torch.utils.data.DataLoader(
-                        dataset, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
+                        dataset, batch_size=batch_size, shuffle=True, num_workers=args.thread_train, pin_memory=True)
     loader_test   = torch.utils.data.DataLoader(
-                        dataset_test, batch_size=batch_size, shuffle=True, num_workers=1, pin_memory=True)
+                        dataset_test, batch_size=batch_size, shuffle=True, num_workers=args.thread_test, pin_memory=True)
     model = make_model().cuda()
     criterion = nn.CrossEntropyLoss().cuda()
     wd = 0.0005
