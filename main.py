@@ -11,6 +11,7 @@ from collections import OrderedDict
 from pprint import pprint
 import gc
 from pympler.tracker import SummaryTracker
+from multi_gpu import wrap_model
 
 """
 TODOs:
@@ -99,6 +100,7 @@ def make_model(num_class=10):
     model = nn.Sequential(layers)
     model.model_conf = model_conf # capture the model_conf for serialization
     init_weights(model, use_in_channel=True)
+    model = wrap_model(model)
     return model
 
 def make_data(train):
