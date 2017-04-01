@@ -1,19 +1,25 @@
 
-## Comments
+## Significant observations
+
+1. Adam and RMSprop lead to a large number of dead units in the later stages of the CNN, whereas SGD creates no dead
+   unit at all. Explanation is that both Adam and RMSprop perform update normalization. When back-propagated error is
+   small and updates are dominated by weight decay, this normalization blows it up, completely eliminating the role of
+   the `weight_decay` parameter, leading to very large weight decays, and pushing the weights to 0 significantly faster,
+   as if we are applying a very large L1 decay (most implementations use L2 decay).
+2. In our training for cifar10, Dropout2d leads to almost 2% lower test accuracy compared to simply Dropout. It might be
+   that out width is not significant enough to deserve whole-channel dropping in Dropout2d.
+
+## Other Comments
 
 Several interesting observations:
 
-1. VGG11 trained on cifar10 has lots of 0-units in the later stages. On the other hand, VGG11 pretrained on ImageNet has
-   not a single 0-unit.
-2. When data is lacking in complexity, large width will result in 0-units (cifar10). When data has enough complexity,
-   large width can be fully filled.
-3. `model3` uses Dropout2d. It removes 0-units better than vanilla Dropout, but still leaves a nontrivial number of
+1. `model3` uses Dropout2d. It removes 0-units better than vanilla Dropout, but still leaves a nontrivial number of
    0-units behind. This seems to suggest that even Dropout2d cannot fully eliminate 0-units. Of course, it could have
    been that I did not use strong enough dropout in `model3`. In `model4` I'll add in even stronger Dropout2d to find
    out if Dropout2d can indeed remove 0-units.
-4. Even though Dropout2d reduces the number of 0-units, test accuracy stays about the same.
-5. Stronger weight decay from 0.00005 to 0.0005 very marginally reduces test accuracy
-6. One vgg16 trained with SGD has not one 0-unit. However, once I changed the optimizer to Adam the 0-units came back
+2. Even though Dropout2d reduces the number of 0-units, test accuracy stays about the same.
+3. Stronger weight decay from 0.00005 to 0.0005 very marginally reduces test accuracy
+4. One vgg16 trained with SGD has not one 0-unit. However, once I changed the optimizer to Adam the 0-units came back
    out. This is very likely due to Adam's update normalization. Units that are almost dead would get very small
    backpropagated errors. Consequently, the dominant update would come from weight decay. Since update normalization
    would scale a small weight decay update to a much larger one, it drives the weight to 0 much faster than SGD. This is
