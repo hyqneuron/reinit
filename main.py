@@ -157,9 +157,10 @@ def make_all(batch_size=64, algo='SGD'):
 
 min_loss = 999999
 min_loss_batches = 0
+epoch_trained = 0
 
 def train(num_epoch, report_interval=100, do_validation=True, do_util=False):
-    global min_loss, min_loss_batches
+    global min_loss, min_loss_batches, epoch_trained
     # gc.collect()
     # tracker = SummaryTracker()
     for epoch in xrange(num_epoch):
@@ -188,8 +189,8 @@ def train(num_epoch, report_interval=100, do_validation=True, do_util=False):
                 if avg_loss < min_loss:
                     min_loss = avg_loss
                     min_loss_batches = 0
-                print('{:4d}, {:4d}: {:6f} [{:6f}/{:6f}] [{:4d}/{:6f}]'.format(
-                    epoch, batch, avg_loss, 
+                print('{:3d},{:3d},{:4d}: {:6f} [{:6f}/{:6f}] [{:4d}/{:6f}]'.format(
+                    epoch_trained, epoch, batch, avg_loss, 
                     get_model_param_norm(model, simple=False), optimizer.update_norm, 
                     min_loss_batches, min_loss))
         print("Epoch {} done. Evaluation:".format(epoch))
@@ -200,6 +201,7 @@ def train(num_epoch, report_interval=100, do_validation=True, do_util=False):
             pprint(get_all_utilization(model))
         # gc.collect()
         # tracker.print_diff()
+    epoch_trained += 1
 
 
 def eval_accuracy(loader):

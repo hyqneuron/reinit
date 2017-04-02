@@ -638,12 +638,29 @@ model_conf = same as model12
 ```
 ## model23
 
-Very similar to model18, with Dropout2d swapped out for vanilla Dropout.
+Very similar to model18, with Dropout2d swapped out for vanilla Dropout. Strangely, this time Adam did not outperform
+SGD. Why is that so?
 
 ```python
 optimizer     = SGD
 lr            = 0.001, [30]*10
 weight_decay  = 0.0005
-test_accuracy = 
+test_accuracy = 0.925
 model_conf = same as model12
+computed_utilization = 
+{'conv1_1/0': (0, 3),
+ 'conv1_2/0': (3, 64),
+ 'conv2_1/0': (0, 64),
+ 'conv2_2/0': (0, 128),
+ 'conv3_1/0': (14, 128),
+ 'conv3_2/0': (35, 256),
+ 'conv3_3/0': (65, 256),
+ 'conv4_1/0': (210, 256),
+ 'conv4_2/0': (390, 512),
+ 'conv4_3/0': (396, 512),
+ 'conv5_1/0': (498, 512),
+ 'conv5_2/0': (333, 512),
+ 'conv5_3/0': (377, 512),
+ 'fc6/0': (32, 512),
+ 'logit': (0, 512)}
 ```
