@@ -560,7 +560,7 @@ model19 is a 300-epoch full run of SGD.
 
 ```python
 optimizer     = SGD
-lr            = 0.001, [30]*10
+lr            = 0.1, [30]*10
 weight_decay  = 0.0005
 test_accuracy = 0.911
 model_conf = same as model12
@@ -618,7 +618,7 @@ model21 is same as model19, with weight decay reduced to 0.0001. Test accuracy s
 weight decay.
 ```python
 optimizer     = SGD
-lr            = 0.001, [30]*10
+lr            = 0.1, [30]*10
 weight_decay  = 0.0001
 test_accuracy = 0.911
 model_conf = same as model12
@@ -631,18 +631,22 @@ almost 2%.
 
 ```python
 optimizer     = SGD
-lr            = 0.001, [30]*10
+lr            = 0.1, [30]*10
 weight_decay  = 0.0005
 test_accuracy = 0.932
 model_conf = same as model12
 ```
+Further results on dead units: This model has lots of near-dead units on fc6. They are not as dead as Adam models, but
+they are on the range of 1e-6, which are pretty dead as well. The number of fc6 units whose bn weights > 0.01 is about
+336.
+
 ## model23
 
 Very similar to model18, with Dropout2d swapped out for vanilla Dropout. Strangely, this time Adam did not outperform
 SGD. Why is that so?
 
 ```python
-optimizer     = SGD
+optimizer     = Adam
 lr            = 0.001, [30]*10
 weight_decay  = 0.0005
 test_accuracy = 0.925
@@ -664,3 +668,356 @@ computed_utilization =
  'fc6/0': (32, 512),
  'logit': (0, 512)}
 ```
+
+Further results on dead unit removal: removed all dead units from the net, and test accuracy remains constant. This is
+good news.
+
+## model24
+
+Quite similar to model22, but with fc6's dropout increased to 0.8. The number of non-dead units in fc6 is still 329
+something.
+
+```python
+optimizer     = SGD
+lr            = 0.1, [30]*10
+weight_decay  = 0.0005
+test_accuracy = 0.933
+model_conf = [
+    ('conv1_1', (64,  0.3)),
+    ('conv1_2', (64,  None)),
+    ('pool1'  , (2,   2)),
+    ('conv2_1', (128, 0.4)),
+    ('conv2_2', (128, None)),
+    ('pool2'  , (2,   2)),
+    ('conv3_1', (256, 0.4)),
+    ('conv3_2', (256, 0.4)),
+    ('conv3_3', (256, None)),
+    ('pool3'  , (2,   2)),
+    ('conv4_1', (512, 0.4)),
+    ('conv4_2', (512, 0.4)),
+    ('conv4_3', (512, None)),
+    ('pool4'  , (2,   2)),
+    ('conv5_1', (512, 0.4)),
+    ('conv5_2', (512, 0.4)),
+    ('conv5_3', (512, None)),
+    ('pool5'  , (2,   2)),
+    ('drop5'  , (None,0.5)),
+    ('fc6'    , (512, 0.8)),
+    ('logit'  , (None,None)),
+    ('flatter', (None,None))
+]
+```
+
+## model25
+
+Similar to model24, with fc6's dropout increased to 0.9. Number of non-dead units now 78! Stronger dropout kills units?
+Also interesting is the fact that training accuracy was about 0.87!
+
+```python
+optimizer     = SGD
+lr            = 0.1, [34]*10
+weight_decay  = 0.0005
+test_accuracy = 0.921, training accuracy never got above 0.9
+model_conf = [
+    ('conv1_1', (64,  0.3)),
+    ('conv1_2', (64,  None)),
+    ('pool1'  , (2,   2)),
+    ('conv2_1', (128, 0.4)),
+    ('conv2_2', (128, None)),
+    ('pool2'  , (2,   2)),
+    ('conv3_1', (256, 0.4)),
+    ('conv3_2', (256, 0.4)),
+    ('conv3_3', (256, None)),
+    ('pool3'  , (2,   2)),
+    ('conv4_1', (512, 0.4)),
+    ('conv4_2', (512, 0.4)),
+    ('conv4_3', (512, None)),
+    ('pool4'  , (2,   2)),
+    ('conv5_1', (512, 0.4)),
+    ('conv5_2', (512, 0.4)),
+    ('conv5_3', (512, None)),
+    ('pool5'  , (2,   2)),
+    ('drop5'  , (None,0.5)),
+    ('fc6'    , (512, 0.9)),
+    ('logit'  , (None,None)),
+    ('flatter', (None,None))
+]
+```
+
+## model26
+
+Similar to model24, with fc6's dropout dropped to 0.3. Number of non-dead units now 394. Most intruigging. Could it be
+that strong dropout allows weight decay to dominate, thus killing more units? So far it seems:
+0.8 wd0.3: 488
+0.3: 394
+0.5: 336
+0.8: 329
+0.9: 78
+It seems as dropout increases the number of dead units do indeed increase.
+
+```python
+optimizer     = SGD
+lr            = 0.1, [34]*10
+weight_decay  = 0.0005
+test_accuracy = 0.930
+model_conf = [
+    ('conv1_1', (64,  0.3)),
+    ('conv1_2', (64,  None)),
+    ('pool1'  , (2,   2)),
+    ('conv2_1', (128, 0.4)),
+    ('conv2_2', (128, None)),
+    ('pool2'  , (2,   2)),
+    ('conv3_1', (256, 0.4)),
+    ('conv3_2', (256, 0.4)),
+    ('conv3_3', (256, None)),
+    ('pool3'  , (2,   2)),
+    ('conv4_1', (512, 0.4)),
+    ('conv4_2', (512, 0.4)),
+    ('conv4_3', (512, None)),
+    ('pool4'  , (2,   2)),
+    ('conv5_1', (512, 0.4)),
+    ('conv5_2', (512, 0.4)),
+    ('conv5_3', (512, None)),
+    ('pool5'  , (2,   2)),
+    ('drop5'  , (None,0.5)),
+    ('fc6'    , (512, 0.3)),
+    ('logit'  , (None,None)),
+    ('flatter', (None,None))
+]
+```
+
+## model27
+
+Similar to model26, with fc6's dropout increased to 0.8 but wd = 0.0005 * 0.3. Number of non-dead units is now 488,
+though test accuracy didn't get any better.
+
+```python
+optimizer     = SGD
+lr            = 0.1, [34]*10
+weight_decay  = 0.0005, 0.0005*0.3 for fc6
+test_accuracy = 0.930
+model_conf = [
+    ('conv1_1', (64,  0.3)),
+    ('conv1_2', (64,  None)),
+    ('pool1'  , (2,   2)),
+    ('conv2_1', (128, 0.4)),
+    ('conv2_2', (128, None)),
+    ('pool2'  , (2,   2)),
+    ('conv3_1', (256, 0.4)),
+    ('conv3_2', (256, 0.4)),
+    ('conv3_3', (256, None)),
+    ('pool3'  , (2,   2)),
+    ('conv4_1', (512, 0.4)),
+    ('conv4_2', (512, 0.4)),
+    ('conv4_3', (512, None)),
+    ('pool4'  , (2,   2)),
+    ('conv5_1', (512, 0.4)),
+    ('conv5_2', (512, 0.4)),
+    ('conv5_3', (512, None)),
+    ('pool5'  , (2,   2)),
+    ('drop5'  , (None,0.5)),
+    ('fc6'    , (512, 0.8)),
+    ('logit'  , (None,None)),
+    ('flatter', (None,None))
+]
+```
+
+## model28
+
+Similar to model27, with drop rate increased to 0.85. Number of non-dead units is now 500.
+
+```python
+optimizer     = SGD
+lr            = 0.1, [34]*10
+weight_decay  = 0.0005, 0.0005*0.3 for fc6
+test_accuracy = 0.928
+model_conf = [
+    ('conv1_1', (64,  0.3)),
+    ('conv1_2', (64,  None)),
+    ('pool1'  , (2,   2)),
+    ('conv2_1', (128, 0.4)),
+    ('conv2_2', (128, None)),
+    ('pool2'  , (2,   2)),
+    ('conv3_1', (256, 0.4)),
+    ('conv3_2', (256, 0.4)),
+    ('conv3_3', (256, None)),
+    ('pool3'  , (2,   2)),
+    ('conv4_1', (512, 0.4)),
+    ('conv4_2', (512, 0.4)),
+    ('conv4_3', (512, None)),
+    ('pool4'  , (2,   2)),
+    ('conv5_1', (512, 0.4)),
+    ('conv5_2', (512, 0.4)),
+    ('conv5_3', (512, None)),
+    ('pool5'  , (2,   2)),
+    ('drop5'  , (None,0.5)),
+    ('fc6'    , (512, 0.85)),
+    ('logit'  , (None,None)),
+    ('flatter', (None,None))
+]
+```
+
+## model29
+
+Similar to model27, with drop rate set to 0.75, and fc6 weight decay to 0.0005 by 0.5. Number of non-dead units now 346.
+Could just be the longer training epochs (400 instead of 300).
+
+```python
+optimizer     = SGD
+lr            = 0.1, [40]*10
+weight_decay  = 0.0005, 0.0005*0.5 for fc6
+test_accuracy = 0.931
+model_conf = [
+    ('conv1_1', (64,  0.3)),
+    ('conv1_2', (64,  None)),
+    ('pool1'  , (2,   2)),
+    ('conv2_1', (128, 0.4)),
+    ('conv2_2', (128, None)),
+    ('pool2'  , (2,   2)),
+    ('conv3_1', (256, 0.4)),
+    ('conv3_2', (256, 0.4)),
+    ('conv3_3', (256, None)),
+    ('pool3'  , (2,   2)),
+    ('conv4_1', (512, 0.4)),
+    ('conv4_2', (512, 0.4)),
+    ('conv4_3', (512, None)),
+    ('pool4'  , (2,   2)),
+    ('conv5_1', (512, 0.4)),
+    ('conv5_2', (512, 0.4)),
+    ('conv5_3', (512, None)),
+    ('pool5'  , (2,   2)),
+    ('drop5'  , (None,0.5)),
+    ('fc6'    , (512, 0.75)),
+    ('logit'  , (None,None)),
+    ('flatter', (None,None))
+]
+```
+
+## model30
+
+similar to model22, with weight decay on all conv5 layers increased to 0.0005 by 2. This seems to have improved test
+accuracy. This experiment was performed after the observation that activation histogram of conv5 units are multi-modal,
+whereas that for all other units are uni-modal (near Laplacian). I hypothesize that by increasing weight decay we can
+make filters in conv5 simpler, and therefore generalize better.
+
+```python
+optimizer     = SGD_conv5wd
+lr            = 0.1, [30]*10
+weight_decay  = 0.0005, 0.0005*2 for conv5
+test_accuracy = 0.933 ~ 0.935
+model_conf = [
+    ('conv1_1', (64,  0.3)),
+    ('conv1_2', (64,  None)),
+    ('pool1'  , (2,   2)),
+    ('conv2_1', (128, 0.4)),
+    ('conv2_2', (128, None)),
+    ('pool2'  , (2,   2)),
+    ('conv3_1', (256, 0.4)),
+    ('conv3_2', (256, 0.4)),
+    ('conv3_3', (256, None)),
+    ('pool3'  , (2,   2)),
+    ('conv4_1', (512, 0.4)),
+    ('conv4_2', (512, 0.4)),
+    ('conv4_3', (512, None)),
+    ('pool4'  , (2,   2)),
+    ('conv5_1', (512, 0.4)),
+    ('conv5_2', (512, 0.4)),
+    ('conv5_3', (512, None)),
+    ('pool5'  , (2,   2)),
+    ('drop5'  , (None,0.5)),
+    ('fc6'    , (512, 0.5)),
+    ('logit'  , (None,None)),
+    ('flatter', (None,None))
+]
+```
+
+## model31
+
+Similar to model30, but with weight decay on all conv5 layers increased to 0.0005 by 4. This obviously has decreased the
+test accuracy.
+
+```python
+optimizer     = SGD_conv5wd
+lr            = 0.1, [30]*10
+weight_decay  = 0.0005, 0.0005*4 for conv5_*
+test_accuracy = 0.930
+model_conf = same as model30
+```
+
+## model32
+
+Similar to model30, but now extends wd increase to conv5 and fc6
+
+```python
+optimizer     = SGD_endwd
+lr            = 0.1, [30]*10
+weight_decay  = 0.0005, 0.0005*2 for conv5 and fc6
+test_accuracy = 0.9335~9342
+model_conf = same as model30
+```
+
+## model33
+
+Repeated model30
+
+```python
+test_accuracy = 0.930
+```
+
+## model34
+
+Repeated model32. Judging from model 30, 21, 32, 33 and 34, it seems stronger regularization in the final layers do make
+sense.
+
+```python
+test_accuracy = 0.935
+```
+
+## model35
+
+similar to 34, but trained with ELU
+
+
+## model36
+
+failed
+
+## model37
+
+similar to 34, but trained with InfoU. Terminated on third age
+
+## model38-40
+
+vgg11, testing different activation units
+
+```python
+model_conf = [
+    ('conv1_1', (64,  None)),
+    ('pool1'  , (2,   2)),
+    ('conv2_1', (128, None)),
+    ('pool2'  , (2,   2)),
+    ('conv3_1', (256, None)),
+    ('conv3_2', (256, None)),
+    ('pool3'  , (2,   2)),
+    ('conv4_1', (256, None)),
+    ('conv4_2', (256, None)),
+    ('pool4'  , (2,   2)),
+    ('conv5_1', (512, None)),
+    ('conv5_2', (512, None)),
+    ('pool5'  , (2,   2)),
+    ('fc6'    , (512, None)),
+    ('logit'  , (None,None)),
+    ('flatter', (None,None))
+]
+```
+
+38: vgg11 without dropout for rapid testing of SGD + ELU    : (50000, 8583) (train correct, test correct)
+39: vgg11 without dropout for rapid testing of SGD + ReLU   : (50000, 8892)
+40: vgg11 without dropout for rapid testing of SGD + InfoU  : (50000, 8560)
+
+Apparently, ELU and InfoU have similar performance at the end. However, during training, InfoU was quite unstable, often
+exhibiting test accuracy below 1/2 of training accuracy. In short, ELU learns faster than InfoU, and is stable, whereas
+InfoU, or at least my current configuration (alpha=2), isn't stable during training, but has similar final performance.
+
+That being said, it is interesting that on this task ReLU significantly outperform ELU and InfoU. Could it have
+something to do with weight initialization, which was specifically designed for ReLU?
